@@ -1,0 +1,30 @@
+.wrapper {
+    min-height: 100vh;
+    width: 100%;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.start_btn {
+    width: 200px;
+    height: 35px;
+    margin-bottom: 25px;
+    cursor: pointer;
+    color: white;
+    background: #222;
+}
+
+.start_btn:hover {
+    background: white;
+    color: #222;
+    transition: all 0.3s ease;
+}
+
+.info {
+    margin-top: 25px;
+    font-style: 36px;
+    color: white;
+}
