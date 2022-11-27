@@ -1,70 +1,93 @@
-import React, { useEffect, useRef, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { io } from "socket.io-client";
+import React, { useContext, useEffect, useState } from "react";
+import styled from "styled-components";
+import { SocketContext } from "../socketContext";
 
 import Board from "./Board";
 import "./game.css";
 import { getWinner } from "./utils/winner";
 
+const PlayStopper = styled.div`
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 99;
+  cursor: default;
+`;
+
 export default function Game() {
-  const initialArray = Array(9).fill(null);
-  const [board, setBoard] = useState(initialArray);
-  const [isXNext, setIsXNext] = useState(true);
+  const socket = useContext(SocketContext);
+  const [board, setBoard] = useState(Array(9).fill(null));
 
-  const [currentChat, setCurrentChat] = useState(uuidv4());
-  const [currentUser, setCurrentUser] = useState(uuidv4());
+  const [playerSymbol, setPlayerSymbol] = useState(null);
+  const [isPlayerTurn, setPlayerTurn] = useState(false);
+  const [isGameStarted, setGameStarted] = useState(false);
 
-  const winner = getWinner(board);
-
-  const handleClick = (index) => {
+  const handleClick = (e, index) => {
     const boardCopy = [...board];
-    if (winner || boardCopy[index]) return;
-    boardCopy[index] = isXNext ? "X" : "0";
+    boardCopy[index] = playerSymbol;
     setBoard(boardCopy);
-    setIsXNext(!isXNext);
+    sendUpdate();
   };
-
-  const startNewGame = () => {
-    return (
-      <button className="start_btn" onClick={() => setBoard(initialArray)}>
-        Clear board
-      </button>
-    );
-  };
-
-  const socket = useRef();
-
-  useEffect(() => {
-    if (currentUser) {
-      socket.current = io("http://localhost:5000");
-      socket.current.emit("add-user", currentUser);
+  const sendUpdate = () => {
+    if (socket) {
+      socket.emit("update_game", board);
+      const winner = getWinner(board);
+      if (winner) {
+        socket.emit("game_win", "You lost!");
+        alert("You Won!");
+      }
+      setPlayerTurn(false);
     }
-  }, [currentUser]);
+  };
 
-  useEffect(() => {
-    if (socket.current) {
-      socket.current.on("msg-recieve", (msg) => {
-        setArrivalMessage(msg);
-        handleClick({
-          vertical: "top",
-          horizontal: "center",
-        });
+  const handleGameUpdate = () => {
+    if (socket) {
+      socket.on("on_game_update", (board) => {
+        console.log(board);
+        setBoard(board);
+        setPlayerTurn(true);
       });
     }
+  };
+
+  const handleGameStart = () => {
+    if (socket) {
+      socket.on("start_game", (options) => {
+        console.log("game started");
+        setGameStarted(true);
+        setPlayerSymbol(options.symbol);
+        if (options.start) {
+          setPlayerTurn(true);
+        } else {
+          setPlayerTurn(false);
+        }
+      });
+    }
+  };
+
+  const handleGameWin = () => {
+    if (socket) {
+      socket.on("on_game_win", (message) => {
+        setPlayerTurn(false);
+        alert(message);
+      });
+    }
+  };
+
+  useEffect(() => {
+    handleGameUpdate();
+    handleGameStart();
+    handleGameWin();
   }, []);
 
   return (
     <div className="wrapper">
-      {startNewGame()}
+      {!isGameStarted && <h2>Waiting for another Player to join the game!</h2>}
+      {(!isGameStarted || !isPlayerTurn) && <PlayStopper />}
       <Board squares={board} handleClick={handleClick} />
-      <p className="info">
-        {winner && winner !== "Draw" ? "Winner is " + winner : null}
-        {winner === "Draw"
-          ? "Draw"
-          : winner
-          ? null
-          : "Next turn " + (isXNext ? "X" : "0")}
-      </p>
+      <p className="info">turn</p>
     </div>
   );
 }
