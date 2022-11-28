@@ -5,9 +5,6 @@ import WelcomePage from "./pages/WelcomePage";
 
 function App() {
   const [isInRoom, setInRoom] = useState(false);
-  const [playerSymbol, setPlayerSymbol] = useState("x");
-  const [isPlayerTurn, setPlayerTurn] = useState(false);
-  const [isGameStarted, setGameStarted] = useState(false);
 
   return (
     <SocketProvider>
