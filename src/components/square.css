@@ -12,6 +12,10 @@
 }
 
 .square:hover {
+    background: #cfe8fc;
+}
+
+.square:hover {
     background: f0f0f0;
     transition: all 0.3s ease;
 }

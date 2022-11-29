@@ -23,7 +23,7 @@ const PlayStopper = styled.div`
   position: absolute;
   bottom: 0;
   left: 0;
-  z-index: 99;
+  z-index: 98;
   cursor: default;
 `;
 
@@ -56,13 +56,12 @@ export default function Game() {
       socket.emit("update_game", { boardCopy });
       const winner = getWinner(boardCopy);
       setWinner(winner);
-      console.log(winner);
       if (winner === "draw") {
-        socket.emit("game_win", "Draw");
+        socket.emit("game_ended", "Draw");
         setModalIsOpen(true);
       }
       if (winner) {
-        socket.emit("game_win", "You lost!");
+        socket.emit("game_ended", winner);
         setModalIsOpen(true);
       }
       setPlayerTurn(false);
@@ -96,17 +95,19 @@ export default function Game() {
 
   const handleGameWin = () => {
     if (socket) {
-      socket.on("on_game_win", (message) => {
+      socket.on("game_ended", (winner) => {
         setPlayerTurn(false);
-        alert(message);
+        setWinner(winner);
+        setModalIsOpen(true);
       });
     }
   };
   const handleGameJoin = () => {
     if (socket) {
       socket.on("room_joined", (name) => {
-        console.log(name);
         setPartner(name);
+        setJoined(true);
+        setLeaved(false);
       });
     }
   };
@@ -131,6 +132,7 @@ export default function Game() {
       return;
     }
     setJoined(false);
+    setAnnoucment(false);
   };
   const handleCloseJoined = (event, reason) => {
     if (reason === "clickaway") {
@@ -138,12 +140,18 @@ export default function Game() {
     }
     setJoined(false);
   };
+  const handleCloseLeaved = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+  };
 
   const yesButton = () => {
     setModalIsOpen(false);
     const boardCopy = Array(9).fill(null);
     dispatch(saveBoard({ boardCopy }));
     sendUpdate(boardCopy);
+    setAnnoucment(true);
   };
   const noButton = () => {
     setModalIsOpen(false);
@@ -151,9 +159,18 @@ export default function Game() {
     window.location.reload();
   };
 
+  const onLeaved = () => {
+    socket.emit("user_leaving", user);
+    window.location.reload();
+  };
+
   return (
     <div className="wrapper">
-      {!isGameStarted && <h2>Waiting for another Player to join the game!</h2>}
+      {!isGameStarted && (
+        <h2 style={{ color: "lightgrey" }}>
+          Waiting for another Player to join the game!
+        </h2>
+      )}
       {(!isGameStarted || !isPlayerTurn) && <PlayStopper />}
       <Board handleClick={handleClick} />
       <p className="info">
@@ -181,7 +198,7 @@ export default function Game() {
         onClose={handleCloseAnn}
         severity="success"
       >
-        <Alert severity="success">Game has started</Alert>
+        <Alert severity="success">A new game has started</Alert>
       </Snackbar>
       <Snackbar
         open={joined}
@@ -189,15 +206,14 @@ export default function Game() {
         onClose={handleCloseJoined}
         severity="success"
       >
-        <Alert severity="success">{partner} joined the game</Alert>
+        <Alert severity="success">{partner} joined the game!</Alert>
       </Snackbar>
       <Snackbar
         open={leaved}
-        autoHideDuration={2000}
-        onClose={() => {}}
-        severity="danger"
+        autoHideDuration={3000}
+        onClose={handleCloseLeaved}
       >
-        <Alert severity="success">{partner} leaved the game!</Alert>
+        <Alert severity="warning">Your partner leaved the game!</Alert>
       </Snackbar>
       <Modal
         open={modalIsOpen}
@@ -228,6 +244,7 @@ export default function Game() {
             color="success"
             onClick={yesButton}
             sx={{ marginRight: 5 }}
+            disabled={leaved}
           >
             <Typography>Yes</Typography>
           </Button>
@@ -239,8 +256,8 @@ export default function Game() {
       <Button
         variant="contained"
         color="success"
-        onClick={() => window.location.reload()}
-        sx={{ position: "absolut" }}
+        onClick={onLeaved}
+        sx={{ position: "absolut", zIndex: 99 }}
       >
         Quit the game
       </Button>

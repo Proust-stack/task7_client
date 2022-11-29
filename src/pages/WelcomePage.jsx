@@ -45,15 +45,30 @@ export default function WelcomePage({ setInRoom }) {
   };
 
   return (
-    <Box>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100vw",
+        height: "100vh",
+        bgcolor: "#cfe8fc",
+      }}
+    >
       <Stack
-        sx={{ bgcolor: "#cfe8fc", height: "100vh", display: "flex" }}
-        direction="colunm"
+        sx={{ bgcolor: "#cfe8fc", height: "100%", display: "flex" }}
         justifyContent="center"
         alignItems="center"
         spacing={2}
         flexWrap="wrap"
       >
+        <Typography
+          variant="h2"
+          sx={{ transform: "skew(5deg, 5deg)", color: "#0a18a6" }}
+        >
+          Tic-tac-toe
+        </Typography>
         <TextField
           id="demo-helper-text-misaligned-no-helper"
           label="name"
@@ -71,6 +86,7 @@ export default function WelcomePage({ setInRoom }) {
           color="success"
           disabled={isJoining}
           onClick={joinRoom}
+          sx={{ transform: "skew(2deg, 3deg)" }}
         >
           {isJoining ? "Joining..." : "Start new game"}
         </Button>

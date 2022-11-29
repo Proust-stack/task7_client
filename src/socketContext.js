@@ -1,5 +1,5 @@
 import React, { createContext } from "react";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 
 const socket = io("https://tictuctoetask7.herokuapp.com", {
   transports: ["websocket"],
